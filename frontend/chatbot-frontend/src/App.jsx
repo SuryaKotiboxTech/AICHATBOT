@@ -12,22 +12,93 @@ function App() {
   const audioChunksRef = useRef([]);
   const [recording, setRecording] = useState(false);
 
+  // async function convertToWav(audioBlob) {
+  //   const arrayBuffer = await audioBlob.arrayBuffer();
+  //   const audioCtx = new AudioContext();
+  //   const audioBuffer = await audioCtx.decodeAudioData(arrayBuffer);
+
+  //   const numOfChan = audioBuffer.numberOfChannels;
+  //   const length = audioBuffer.length * numOfChan * 2;
+  //   const buffer = new ArrayBuffer(44 + length);
+  //   const view = new DataView(buffer);
+
+  //   let offset = 0;
+
+  //   const writeString = (s) => {
+  //     for (let i = 0; i < s.length; i++) {
+  //       view.setUint8(offset++, s.charCodeAt(i));
+  //     }
+  //   };
+
+  //   writeString("RIFF");
+  //   view.setUint32(offset, 36 + length, true);
+  //   offset += 4;
+  //   writeString("WAVE");
+  //   writeString("fmt ");
+  //   view.setUint32(offset, 16, true);
+  //   offset += 4;
+  //   view.setUint16(offset, 1, true);
+  //   offset += 2;
+  //   view.setUint16(offset, numOfChan, true);
+  //   offset += 2;
+  //   view.setUint32(offset, audioBuffer.sampleRate, true);
+  //   offset += 4;
+  //   view.setUint32(offset, audioBuffer.sampleRate * 2 * numOfChan, true);
+  //   offset += 4;
+  //   view.setUint16(offset, numOfChan * 2, true);
+  //   offset += 2;
+  //   view.setUint16(offset, 16, true);
+  //   offset += 2;
+  //   writeString("data");
+  //   view.setUint32(offset, length, true);
+  //   offset += 4;
+
+  //   const channels = [];
+  //   for (let i = 0; i < numOfChan; i++) {
+  //     channels.push(audioBuffer.getChannelData(i));
+  //   }
+
+  //   let interleaved;
+  //   if (numOfChan === 2) {
+  //     interleaved = new Float32Array(audioBuffer.length * 2);
+  //     let idx = 0;
+  //     for (let i = 0; i < audioBuffer.length; i++) {
+  //       interleaved[idx++] = channels[0][i];
+  //       interleaved[idx++] = channels[1][i];
+  //     }
+  //   } else {
+  //     interleaved = channels[0];
+  //   }
+
+  //   for (let i = 0; i < interleaved.length; i++) {
+  //     const sample = Math.max(-1, Math.min(1, interleaved[i]));
+  //     view.setInt16(
+  //       offset,
+  //       sample < 0 ? sample * 0x8000 : sample * 0x7fff,
+  //       true
+  //     );
+  //     offset += 2;
+  //   }
+
+  //   return new Blob([view], { type: "audio/wav" });
+  // }
+
   useEffect(() => {
     const fetchMessages = async () => {
       try {
         const res = await fetch(`${API}/api/chat/get-all-messages`);
         const data = await res.json();
 
-        const formatted = data.map(msg => ({
+        const formatted = data.map((msg) => ({
           id: msg._id,
           role: msg.sender === "user" ? "user" : "bot",
           text: msg.text,
           audioUrl: msg.audioUrl,
           type: msg.type,
           timestamp: new Date(msg.createdAt).toLocaleTimeString([], {
-            hour: '2-digit',
-            minute: '2-digit'
-          })
+            hour: "2-digit",
+            minute: "2-digit",
+          }),
         }));
 
         setMessages(formatted);
@@ -39,15 +110,15 @@ function App() {
     fetchMessages();
   }, []);
 
-  useEffect(() => {
-  return () => {
-    messages.forEach(m => {
-      if (m.audioUrl?.startsWith("blob:")) {
-        URL.revokeObjectURL(m.audioUrl);
-      }
-    });
-  };
-}, [messages]);
+  // useEffect(() => {
+  //   return () => {
+  //     messages.forEach((m) => {
+  //       if (m.audioUrl?.startsWith("blob:")) {
+  //         URL.revokeObjectURL(m.audioUrl);
+  //       }
+  //     });
+  //   };
+  // }, [messages]);
 
   const sendMessage = async () => {
     if (!input.trim()) return;
@@ -60,9 +131,9 @@ function App() {
       audioUrl: null,
       type: "text",
       timestamp: new Date().toLocaleTimeString([], {
-        hour: '2-digit',
-        minute: '2-digit'
-      })
+        hour: "2-digit",
+        minute: "2-digit",
+      }),
     };
 
     setMessages((prev) => [...prev, userMsg]);
@@ -76,7 +147,7 @@ function App() {
 
       const res = await fetch(`${API}/api/chat`, {
         method: "POST",
-        body: formData
+        body: formData,
       });
 
       const data = await res.json();
@@ -91,10 +162,10 @@ function App() {
           audioUrl: data.ai.audioUrl,
           type: data.ai.audioUrl ? "audio" : "text",
           timestamp: new Date().toLocaleTimeString([], {
-            hour: '2-digit',
-            minute: '2-digit'
-          })
-        }
+            hour: "2-digit",
+            minute: "2-digit",
+          }),
+        },
       ]);
     } catch (err) {
       console.error(err);
@@ -106,95 +177,126 @@ function App() {
   const sendAudioMessage = async (audioBlob) => {
     const localAudioUrl = URL.createObjectURL(audioBlob);
 
-    // show user audio instantly
-    const userMsg = {
-      id: `${Date.now()}-${Math.random()}`,
-      role: "user",
-      text: null,
-      audioUrl: localAudioUrl,
-      type: "audio",
-      timestamp: new Date().toLocaleTimeString([], {
-        hour: "2-digit",
-        minute: "2-digit"
-      })
-    };
 
-    setMessages(prev => [...prev, userMsg]);
-    setLoading(true);
 
     try {
       const formData = new FormData();
-      formData.append("audio", audioBlob, "voice-message.webm");
 
-      const res = await fetch(`${API}/api/chat`, {
+      // ⚠️ FIELD NAME MUST MATCH BACKEND / POSTMAN
+      formData.append("audio", audioBlob, "voice.webm");
+      // formData.append("audio", audioBlob, "voice.wav");
+
+      const res = await fetch("http://localhost:3000/api/chat", {
         method: "POST",
-        body: formData
+        body: formData,
       });
 
-      const data = await res.json();
+      // 🔥 NEVER blindly do res.json()
+      const raw = await res.text();
 
-      setMessages(prev => [
+      if (!res.ok) {
+        console.error("Backend error:", raw);
+        return;
+      }
+
+      const data = JSON.parse(raw);
+
+      setMessages((prev) => [
         ...prev,
         {
-          id: `${Date.now()}-${Math.random()}` + 1,
+          id: Date.now() + 1,
           role: "bot",
-          text: data.ai.text,
-          audioUrl: data.ai.audioUrl,
-          type: data.ai.audioUrl ? "audio" : "text",
+          text: data.ai?.text || "",
+          audioUrl: data.ai?.audioUrl || null,
+          type: data.ai?.audioUrl ? "audio" : "text",
           timestamp: new Date().toLocaleTimeString([], {
             hour: "2-digit",
-            minute: "2-digit"
-          })
-        }
+            minute: "2-digit",
+          }),
+        },
       ]);
     } catch (err) {
-      console.error("Audio upload failed", err);
-    } finally {
-      setLoading(false);
+      console.error("Audio upload failed:", err);
     }
   };
-
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, loading]);
 
-
   const startRecording = async () => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
 
-      mediaRecorderRef.current = new MediaRecorder(stream);
-      audioChunksRef.current = [];
+    const mimeType = MediaRecorder.isTypeSupported("audio/webm;codecs=opus")
+      ? "audio/webm;codecs=opus"
+      : "audio/webm";
 
-      mediaRecorderRef.current.ondataavailable = (e) => {
-        if (e.data.size > 0) audioChunksRef.current.push(e.data);
-      };
+    const mediaRecorder = new MediaRecorder(stream, { mimeType });
 
-      mediaRecorderRef.current.onstop = async () => {
-        const audioBlob = new Blob(audioChunksRef.current, {
-          type: "audio/webm"
-        });
+    mediaRecorderRef.current = mediaRecorder;
+    audioChunksRef.current = [];
 
-        sendAudioMessage(audioBlob);
+    mediaRecorder.ondataavailable = (e) => {
+      if (e.data.size > 0) {
+        audioChunksRef.current.push(e.data);
+      }
+    };
 
-        stream.getTracks().forEach(track => track.stop());
-      };
+    mediaRecorder.onstop = async () => {
+  try {
+    // 1️⃣ WebM blob from MediaRecorder
+    const webmBlob = new Blob(audioChunksRef.current, {
+      type: mimeType
+    });
 
-      mediaRecorderRef.current.start();
-      setRecording(true);
-    } catch (err) {
-      console.error("Mic permission denied", err);
+    console.log("WebM size:", webmBlob.size);
+
+    if (webmBlob.size < 1000) {
+      console.error("❌ Empty or too short audio");
+      return;
     }
+
+
+    // 3️⃣ Create URL for UI playback
+    const audioUrl = URL.createObjectURL(webmBlob);
+
+    // 4️⃣ Show user audio in UI (perfect playback)
+    setMessages(prev => [
+      ...prev,
+      {
+        id: Date.now(),
+        role: "user",
+        audioUrl,
+        type: "audio",
+        timestamp: new Date().toLocaleTimeString([], {
+          hour: "2-digit",
+          minute: "2-digit"
+        })
+      }
+    ]);
+
+    // 5️⃣ Send WAV to backend (STT works properly)
+    sendAudioMessage(webmBlob);
+
+      stream.getTracks().forEach((t) => t.stop());
+  audioChunksRef.current = [];
+
+  } catch (err) {
+    console.error("Recording stop error:", err);
+  }
+};
+
+
+    mediaRecorder.start();
+    setRecording(true);
   };
 
   const stopRecording = () => {
-    if (mediaRecorderRef.current && recording) {
-      mediaRecorderRef.current.stop();
-      setRecording(false);
-    }
-  };
+    if (!mediaRecorderRef.current) return;
 
+    mediaRecorderRef.current.stop();
+    setRecording(false);
+  };
 
   return (
     <div className="app">
@@ -214,19 +316,15 @@ function App() {
           {messages.map((m) => (
             <div
               key={m.id}
-              className={`message ${m.role} ${m.audioUrl ? 'has-audio' : ''}`}
+              className={`message ${m.role} ${m.audioUrl ? "has-audio" : ""}`}
             >
               {m.audioUrl ? (
                 // Audio messages - don't show text
                 <div className="audio-container">
                   <div className="audio-indicator">
-                    {m.role === 'user' ? 'Your audio message' : 'AI response'}
+                    {m.role === "user" ? "Your audio message" : "AI response"}
                   </div>
-                  <audio
-                    controls
-                    src={m.audioUrl}
-                    className="audio-player"
-                  />
+                  <audio controls src={m.audioUrl} className="audio-player" />
                   <div className="message-time">{m.timestamp}</div>
                 </div>
               ) : (
@@ -260,13 +358,9 @@ function App() {
           {/* 🎤 Voice button */}
           <button
             className={`mic-btn ${recording ? "recording" : ""}`}
-            onMouseDown={startRecording}
-            onMouseUp={stopRecording}
-            onTouchStart={startRecording}
-            onTouchEnd={stopRecording}
-            disabled={loading}
+            onClick={() => (recording ? stopRecording() : startRecording())}
           >
-            🎤
+            {recording ? "⏹ Stop" : "🎤 Record"}
           </button>
 
           {/* ➤ Send text */}
@@ -278,7 +372,6 @@ function App() {
             ➤
           </button>
         </div>
-
       </div>
     </div>
   );
