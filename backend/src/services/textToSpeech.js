@@ -20,6 +20,9 @@ const responsesDir = path.join(__dirname, "..", "..", "responses");
 
 export async function textToSpeech(text) {
   try {
+
+    
+
     const fileName = `response-${crypto.randomUUID()}.mp3`;
 
     // ✅ ABSOLUTE FILE PATH (THIS FIXES ENOENT)

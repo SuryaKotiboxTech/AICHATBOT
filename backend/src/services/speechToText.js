@@ -2,6 +2,7 @@
 import fs from "fs";
 import OpenAI from "openai";
 import dotenv from "dotenv"
+import { convertWebmToWav } from "./audioConverter.js";
 
 dotenv.config()
 
@@ -11,8 +12,9 @@ const openai = new OpenAI({
 
 export async function speechToText(audioPath) {
   try {
+    const wavPath = await convertWebmToWav(audioPath);
     const transcription = await openai.audio.transcriptions.create({
-      file: fs.createReadStream(audioPath),
+      file: fs.createReadStream(wavPath),
       model: "gpt-4o-transcribe"
     });
 

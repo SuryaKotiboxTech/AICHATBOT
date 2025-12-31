@@ -56,6 +56,9 @@ export const chatHandler = async (req, res) => {
     let userText = "";
     let inputAudioUrl = null;
     let inputType = "text";
+    console.log("CWD:", process.cwd());
+console.log("req.file:", req.file);
+
 
     // 🎤 USER VOICE INPUT
     if (req.file) {
