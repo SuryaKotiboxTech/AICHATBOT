@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import "./App.css";
 
-const API = "http://localhost:3000";
+const API = "https://xoto.ae";
 
 function App() {
   const [messages, setMessages] = useState([]);
@@ -86,7 +86,7 @@ function App() {
   useEffect(() => {
     const fetchMessages = async () => {
       try {
-        const res = await fetch(`${API}/api/chat/get-all-messages`);
+        const res = await fetch(`${API}/api/ai/chat/get-all-messages`);
         const data = await res.json();
 
         const formatted = data.map((msg) => ({
@@ -145,7 +145,7 @@ function App() {
       const formData = new FormData();
       formData.append("message", userMsg.text);
 
-      const res = await fetch(`${API}/api/chat`, {
+      const res = await fetch(`${API}/api/ai/chat`, {
         method: "POST",
         body: formData,
       });
